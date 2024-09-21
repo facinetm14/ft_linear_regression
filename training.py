@@ -1,23 +1,52 @@
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-import pandas as pd
+from helpers import read_dataset
+from predict import predict_price
 
-data = pd.read_csv('../dataset/data.csv')
+def compute_cost(mileage_data, price_data, theta0, theta1):
+    m = len(mileage_data)
+    total_cost = 0
+    for i in range(m):
+        prediction = predict_price(mileage_data[i], theta0, theta1)
+        total_cost += (prediction - price_data[i]) ** 2
+    return total_cost / (2 * m)
 
-x = data[['km']]
-y = data[['price']]
+def gradient_descent(mileage_data, price_data, theta0, theta1, learning_rate, iterations):
+    m = len(mileage_data)
+    for iteration in range(iterations): 
+        tmp_theta0 = 0.0
+        tmp_theta1 = 0.0
+        
+        for i in range(m):
+            prediction = predict_price(mileage_data[i], theta0, theta1)
+            error = prediction - price_data[i]
+            
+            tmp_theta0 += error
+            tmp_theta1 += error * mileage_data[i]
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+        theta0 -= (learning_rate / m) * tmp_theta0
+        theta1 -= (learning_rate / m) * tmp_theta1
 
-print('x_train:', x_train)
-print('x_test:', x_test)
-print('y_train:', y_train)
-print('y_test:', y_test)
 
-model = LinearRegression() 
-model.fit(x_train, y_train)
+        if (iteration % 100 == 0):
+            cost = compute_cost(mileage_data, price_data, theta0, theta1)
+            print(f"Iteration {iteration} - Cost: {cost} - Theta0 = {theta0}, Theta1 = {theta1}")
+    
+    return theta0, theta1
 
-print(f'Coefficient: {model.coef_}')
-print(f'Intercept: {model.intercept_}')
-print(f'Score: {model.score(x_test, y_test)}')
+def train_model(data_src = "data/data.csv", theta_values_src = "theta_values.txt", learning_rate=-0.42, iterations=10000):
+    mileage_data, price_data = read_dataset(data_src)
+    
+    theta0 = 0.0
+    theta1 = 0.0
 
+    print(f"mileag_data {mileage_data} \n price data {price_data}")
+    theta0, theta1 = gradient_descent(mileage_data, price_data, theta0, theta1, learning_rate, iterations)
+    
+    with open(theta_values_src, "w") as f:
+        f.write(f"{theta0}\n")
+        f.write(f"{theta1}\n")
+    
+    print(f"Training complete. Theta0 = {theta0}, Theta1 = {theta1}")
+
+
+if __name__ == "__main__":
+  train_model()

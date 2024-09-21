@@ -1,2 +1,2 @@
-def predict_price(mileage):
-    return mileage * (0.05 + 10000)
+def predict_price(mileage, theta0, theta1):
+     return theta0 + theta1 * mileage 
